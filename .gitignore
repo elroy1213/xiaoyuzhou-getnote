@@ -1,0 +1,18 @@
+# 个人数据与生成物 —— 不提交
+podcasts.txt
+ratings.csv
+profiles.csv
+show-cache.json
+state.json
+pushed.json
+getnote.json
+reports/
+__pycache__/
+*.pyc
+.DS_Store
+
+# 含个人订阅列表 / 评级的生成文档
+播客清单与评级.md
+播客背景与立场梳理.md
+评级名单.md
+得到大脑播客工作流.md

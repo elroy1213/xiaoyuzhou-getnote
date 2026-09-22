@@ -1,0 +1,11 @@
+{
+  "default_kb": "",
+  "domain_kb": {
+    "专业领域": "",
+    "职场管理": "",
+    "个人生活": ""
+  },
+  "ratings": ["S", "A"],
+  "title_prefix": true,
+  "exclude_kinds": ["二手工具号"]
+}
