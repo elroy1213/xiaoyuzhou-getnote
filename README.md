@@ -1,4 +1,4 @@
-# 小宇宙播客情报管线 · xyz-podcast-tracker
+# 小宇宙 × 得到大脑 · 播客情报管线
 
 > 把小宇宙（Xiaoyuzhou FM）的关注播客更新，变成一份**按工作目的分类、带 S/A/B 优先级、
 > 已灌进笔记库可随时提问**的情报清单。
@@ -36,7 +36,7 @@
 ## 快速开始
 
 ```bash
-git clone <this-repo> && cd xyz-podcast-tracker
+git clone <this-repo> && cd xiaoyuzhou-getnote
 
 # 1) 准备监控清单（复制示例后填自己的）
 cp podcasts.example.txt podcasts.txt

@@ -1,5 +1,5 @@
 ---
-name: xyz-podcast-tracker
+name: xiaoyuzhou-getnote
 description: 扫描小宇宙（Xiaoyuzhou FM）播客更新，按工作目的（专业领域 / 职场管理 / 个人生活）分类，把新单集链接推送进「得到大脑」（Get 笔记）自动转写与摘要，并输出在标题前标注 S / A / B 优先级的情报清单。当用户说「扫一下小宇宙」「播客有什么更新」「播客情报」「灌进得到大脑」「本周播客」「掌握了哪些信息源」时使用。
 agent_created: true
 ---
@@ -21,7 +21,7 @@ agent_created: true
 ## 一键流程（建议每周跑一次）
 
 ```bash
-cd ~/.workbuddy/skills/xyz-podcast-tracker
+cd ~/.workbuddy/skills/xiaoyuzhou-getnote
 
 # 1) 先看会推什么（不写入）
 python3 push_to_getnote.py --since 7d --dry-run
