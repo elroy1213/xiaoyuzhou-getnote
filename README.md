@@ -126,6 +126,9 @@ GitHub 上其他小宇宙转录项目（`rrrrrredy/xiaoyuzhou-podcast`、
 3. **读操作也会超时，但读的重试是安全的。** `getnote note original` 对长笔记同样
    报 `context deadline exceeded`，实测重试到第 4 次才拿到（2.5 小时播客约 6.5 万字）。
    **读是幂等的，可以放心重试；只有写操作不能重试**（会产生重复笔记）。
+3. **读操作也会超时，但读的重试是安全的。** `getnote note original` 对长笔记同样
+   报 `context deadline exceeded`，实测重试到第 4 次才拿到（2.5 小时播客约 6.5 万字）。
+   **读是幂等的，可以放心重试；只有写操作不能重试**（会产生重复笔记）。
 
 ---
 
@@ -139,6 +142,15 @@ GitHub 上其他小宇宙转录项目（`rrrrrredy/xiaoyuzhou-podcast`、
 | `build_profiles.py` | 生成信息源背景与立场分类（谁做的、有没有利益立场） |
 | `build_roster.py` | 生成评级清单，供你打 S / A / B |
 | `build_namelist.py` | 按 S/A/B 分层生成名单，含时间成本估算 |
+| `fetch_transcripts.py` | 把逐字稿拉到 `transcripts/raw/`（带重试，见下） |
+| `backfill_pushed.py` | 回填历史记录缺失的发布日期 / 时长 / 领域字段 |
+
+### 逐字稿 → Q&A
+
+`fetch_transcripts.py` 拉下带时间戳的逐字稿，再按
+[`references/qa-format.md`](references/qa-format.md) 重排成 Q&A Markdown
+（保留全部数字、公司名、人名；文末列 ASR 存疑处）。实测 14 期：原始 23 小时、
+58.9 万字 → Q&A 约 5.8 万字，压缩到 1/3–1/5。
 | `fetch_transcripts.py` | 把逐字稿拉到 `transcripts/raw/`（带重试，见下） |
 | `backfill_pushed.py` | 回填历史记录缺失的发布日期 / 时长 / 领域字段 |
 
