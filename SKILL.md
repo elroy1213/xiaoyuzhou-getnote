@@ -156,7 +156,25 @@ build_roster.py     生成评级清单 → 播客清单与评级.md + ratings.cs
 build_namelist.py   按评级分层 → 评级名单.md（含 S 级时间成本）
 xyz_tracker.py      扫描更新 → 按领域分组 + 评级排序 + 背景标注
 push_to_getnote.py  【核心】推送进得到大脑 + 输出带 S/A/B 标注的情报清单
+fetch_transcripts.py 拉逐字稿到 transcripts/raw/（带重试；读操作重试是安全的）
+backfill_pushed.py  回填历史记录缺失的 pub/duration/domain 字段
 ```
+
+### 逐字稿 → Q&A
+
+拉下逐字稿后，按 `references/qa-format.md` 的规范重排成 Q&A Markdown 存
+`transcripts/qa/`。规范要点：Q 必须真实、A 只压缩不添加、保留全部数字与人名、
+文末列 ASR 存疑处、压缩到 1/5–1/8。
+
+**逐字稿很长（单篇最多 9.4 万字），14 篇合计 58.9 万字——必须分批用子任务并行处理，
+不要试图在一个上下文里读完。** 实测分 6 批、每批约 10 万字可稳定完成。
+
+### 坑 5：RSS 通道节目永远不会被转写
+
+`feeds.fireside.fm` 等第三方页面，得到大脑抓不到音频，只存 shownotes →
+0 行时间戳、无逐字稿。**解法：配 `rss-to-xzy.json`**（RSS feed → 小宇宙 pid），
+`push_to_getnote.py` 会自动把小宇宙单集链接替换进去。
+直接推音频直链不行（返回「生成笔记失败」）。
 
 改了 `podcasts.txt` 后建议依次重跑 `build_profiles.py` → `build_roster.py`。
 

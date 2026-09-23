@@ -46,8 +46,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from xyz_tracker import (  # noqa: E402
-    DOMAINS, UNCLASSIFIED, fetch_all, load_profiles, load_ratings,
-    load_watchlist, to_dt,
+    DOMAINS, NEXT_DATA_RE, UNCLASSIFIED, fetch_all, http_get, load_profiles,
+    load_ratings, load_watchlist, to_dt,
 )
 
 CST = timezone(timedelta(hours=8))
@@ -76,6 +76,44 @@ def load_config() -> dict:
         except ValueError:
             log(f"getnote.json 解析失败，用默认配置")
     return cfg
+
+
+RSS_XZY = HERE / "rss-to-xzy.json"
+
+
+def load_rss_xzy() -> dict[str, str]:
+    """RSS feed URL → 小宇宙 pid 的替身映射。"""
+    if not RSS_XZY.exists():
+        return {}
+    try:
+        d = json.loads(RSS_XZY.read_text(encoding="utf-8"))
+    except ValueError:
+        return {}
+    return {k: v for k, v in d.items() if not k.startswith("_") and v}
+
+
+def norm_title(s: str) -> str:
+    return re.sub(r"[\s\W_]+", "", (s or "")).lower()
+
+
+def xzy_index(pid: str) -> dict[str, str]:
+    """小宇宙 pid → {归一化标题: 单集链接}。
+
+    为什么需要：RSS 通道（如 fireside）的页面，得到大脑抓不到音频、只存 shownotes，
+    因此不会生成逐字稿。换成小宇宙单集链接就能正常转写。
+    """
+    try:
+        h = http_get(f"https://www.xiaoyuzhoufm.com/podcast/{pid}", timeout=45, retries=2)
+        pod = json.loads(NEXT_DATA_RE.search(h).group(1))["props"]["pageProps"]["podcast"]
+    except Exception as e:  # noqa: BLE001
+        log(f"  解析小宇宙替身失败（{pid}）：{type(e).__name__}")
+        return {}
+    out = {}
+    for e in pod.get("episodes") or []:
+        k = norm_title(e.get("title") or "")
+        if k:
+            out[k] = f"https://www.xiaoyuzhoufm.com/episode/{e.get('eid','')}"
+    return out
 
 
 def getnote_bin() -> str:
@@ -202,6 +240,17 @@ def collect_candidates(args, cfg) -> list[dict]:
     log(f"扫描 {len(sources)} 档（最近 {args.days} 天）…")
     results = fetch_all(sources, args.concurrency, load_profiles(), load_ratings())
 
+    # RSS 通道节目：若配了小宇宙替身，改用小宇宙单集链接（否则得到大脑不会转写）
+    rss_xzy = load_rss_xzy()
+    alt: dict[str, dict[str, str]] = {}
+    for s in sources:
+        pid = rss_xzy.get(s["key"])
+        if s["kind"] == "rss" and pid:
+            idx = xzy_index(pid)
+            if idx:
+                alt[s["key"]] = idx
+                log(f"  小宇宙替身：{s.get('note') or s['key']} → {len(idx)} 期可用")
+
     pushed = json.loads(PUSHED.read_text(encoding="utf-8")) if PUSHED.exists() else {}
     want = {r.strip().upper() for r in args.ratings.split(",") if r.strip()}
     skip_kinds = set(cfg.get("exclude_kinds") or [])
@@ -222,8 +271,12 @@ def collect_candidates(args, cfg) -> list[dict]:
             dt = to_dt(ep["pub"])
             if dt and dt < since:
                 continue
+            url = ep["url"]
+            idx = alt.get(r["key"])
+            if idx:
+                url = idx.get(norm_title(ep["title"]), url)
             cands.append({
-                "eid": ep["id"], "url": ep["url"], "title": ep["title"],
+                "eid": ep["id"], "url": url, "title": ep["title"],
                 "podcast": r["title"], "domain": r["domain"], "rating": rating,
                 "kind": kind, "duration": ep["duration"], "pub_dt": dt,
                 "note": r.get("note", ""),
@@ -435,6 +488,17 @@ def main() -> int:
     if args.dry_run:
         log("\n--dry-run：未写入。去掉该参数即正式推送。")
         return 0
+
+    # RSS 通道节目：若配了小宇宙替身，改用小宇宙单集链接（否则得到大脑不会转写）
+    rss_xzy = load_rss_xzy()
+    alt: dict[str, dict[str, str]] = {}
+    for s in sources:
+        pid = rss_xzy.get(s["key"])
+        if s["kind"] == "rss" and pid:
+            idx = xzy_index(pid)
+            if idx:
+                alt[s["key"]] = idx
+                log(f"  小宇宙替身：{s.get('note') or s['key']} → {len(idx)} 期可用")
 
     pushed = json.loads(PUSHED.read_text(encoding="utf-8")) if PUSHED.exists() else {}
 

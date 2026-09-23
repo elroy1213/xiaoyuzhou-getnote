@@ -1,0 +1,5 @@
+{
+  "_说明": "RSS 通道节目的「小宇宙替身 pid」。得到大脑抓不到 fireside 等第三方页面的音频，只存 shownotes；改成小宇宙单集链接就能正常转写。",
+  "_怎么加": "在小宇宙打开该节目主页，URL 里 /podcast/ 后那 24 位就是 pid。",
+  "https://feeds.fireside.fm/sv101/rss": "5e5c52c9418a84a04625e6cc"
+}

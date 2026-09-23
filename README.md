@@ -103,7 +103,19 @@ GitHub 上其他小宇宙转录项目（`rrrrrredy/xiaoyuzhou-podcast`、
 `weisi-gu/xiaoyuzhou-podcast-notes`）**全都要自己接一个 ASR**，且都落到 Obsidian
 或本地 md。除非你要离线可控或说话人分段，否则不如直接用它。
 
-### 两个必读操作坑
+### RSS 通道节目不会被转写（重要）
+
+`feeds.fireside.fm` 等第三方页面，得到大脑**抓不到音频，只存 shownotes**，
+因此**永远不会有逐字稿**。实测：两期《硅谷101》推的是 `sv101.fireside.fm/264`，
+拉回来的只有 5 千字 shownotes、0 行时间戳。
+
+**解法**：改用该节目在**小宇宙的单集链接**。配置 `rss-to-xzy.json` 建立
+「RSS feed → 小宇宙 pid」映射后，`push_to_getnote.py` 会自动把单集链接换成
+小宇宙的，转写随即正常（实测同一期从 0 字变成 44,292 字）。
+
+直接推音频直链**不行**——得到大脑返回 `生成笔记失败`，它需要能抓取的网页。
+
+### 三个必读操作坑
 
 1. **CLI 约 30 秒超时报错，但服务端其实已经成功。**
    会返回 `context deadline exceeded` / `retryable: false`，稍后就能查到笔记。
@@ -111,6 +123,9 @@ GitHub 上其他小宇宙转录项目（`rrrrrredy/xiaoyuzhou-podcast`、
    实测 13 期中 9 期报超时，**最终 14/14 全部入库**。
 2. **`getnote notes` 每页只返回 20 条**，必须按返回的 `cursor` 翻页，
    否则回查会漏掉较早创建的笔记。
+3. **读操作也会超时，但读的重试是安全的。** `getnote note original` 对长笔记同样
+   报 `context deadline exceeded`，实测重试到第 4 次才拿到（2.5 小时播客约 6.5 万字）。
+   **读是幂等的，可以放心重试；只有写操作不能重试**（会产生重复笔记）。
 
 ---
 
@@ -124,6 +139,15 @@ GitHub 上其他小宇宙转录项目（`rrrrrredy/xiaoyuzhou-podcast`、
 | `build_profiles.py` | 生成信息源背景与立场分类（谁做的、有没有利益立场） |
 | `build_roster.py` | 生成评级清单，供你打 S / A / B |
 | `build_namelist.py` | 按 S/A/B 分层生成名单，含时间成本估算 |
+| `fetch_transcripts.py` | 把逐字稿拉到 `transcripts/raw/`（带重试，见下） |
+| `backfill_pushed.py` | 回填历史记录缺失的发布日期 / 时长 / 领域字段 |
+
+### 逐字稿 → Q&A
+
+`fetch_transcripts.py` 拉下带时间戳的逐字稿，再按
+[`references/qa-format.md`](references/qa-format.md) 重排成 Q&A Markdown
+（保留全部数字、公司名、人名；文末列 ASR 存疑处）。实测 14 期：原始 23 小时、
+58.9 万字 → Q&A 约 5.8 万字，压缩到 1/3–1/5。
 
 ## 按工作目的分类
 
